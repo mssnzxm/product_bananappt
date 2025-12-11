@@ -447,7 +447,7 @@ banana-slides/
 
 MIT
 
-<h2>🚀 致谢</h2>
+<h2>🚀 Sponsor / 赞助 </h2>
 
 <div align="center">
 <a href="https://aihubmix.com/?aff=17EC">
