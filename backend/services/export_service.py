@@ -14,6 +14,7 @@ from PIL import Image
 import io
 import tempfile
 import img2pdf
+from services.prompts import get_clean_background_prompt
 
 logger = logging.getLogger(__name__)
 
@@ -36,12 +37,8 @@ class ExportService:
             Path to the generated clean background image, or None if failed
         """
         try:
-            # Create edit instruction to remove foreground elements
-            edit_instruction  = """\
-去除当前ppt页面的所有前景元素，包括标题、正文、注释等文字，以及插画、图标、配图、表格等图像。
-保持原有文本框布局、配色、风格、渐变、背景装饰线条、背景图案等背景元素不变。
-最终输出一张纯背景图像，尺寸与原图一致。
-"""
+            # Get clean background prompt from prompts module
+            edit_instruction = get_clean_background_prompt()
             
             logger.info(f"Generating clean background from: {original_image_path}")
             
