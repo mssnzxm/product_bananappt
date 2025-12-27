@@ -501,7 +501,8 @@ banana-slides/
 
 欢迎提出新功能建议或反馈，本人也会~~佛系~~回答大家问题
 
-<img width="300"  alt="image" src="https://github.com/user-attachments/assets/0d4eb8cd-2c95-4f1c-aca2-2a656e6601a4" />
+<img width="300" alt="image" src="https://github.com/user-attachments/assets/b37b6144-5152-4f30-9b90-0c0678374437" />
+
 
 **常见问题**
 1.  **支持免费层级的 Gemini API Key 吗？**
