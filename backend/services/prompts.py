@@ -291,7 +291,8 @@ def get_image_generation_prompt(page_desc: str, outline_text: str,
                                 current_section: str,
                                 has_material_images: bool = False,
                                 extra_requirements: str = None,
-                                language: str = None) -> str:
+                                language: str = None,
+                                has_template: bool = True) -> str:
     """
     生成图片生成 prompt
     
@@ -300,7 +301,9 @@ def get_image_generation_prompt(page_desc: str, outline_text: str,
         outline_text: 大纲文本
         current_section: 当前章节
         has_material_images: 是否有素材图片
-        extra_requirements: 额外的要求
+        extra_requirements: 额外的要求（可能包含风格描述）
+        language: 输出语言
+        has_template: 是否有模板图片（False表示无模板模式）
         
     Returns:
         格式化后的 prompt 字符串
@@ -309,7 +312,7 @@ def get_image_generation_prompt(page_desc: str, outline_text: str,
     material_images_note = ""
     if has_material_images:
         material_images_note = (
-            "\n\n提示：除了模板参考图片（用于风格参考）外，还提供了额外的素材图片。"
+            "\n\n提示：" + ("除了模板参考图片（用于风格参考）外，还提供了额外的素材图片。" if has_template else "用户提供了额外的素材图片。") +
             "这些素材图片是可供挑选和使用的元素，你可以从这些素材图片中选择合适的图片、图标、图表或其他视觉元素"
             "直接整合到生成的PPT页面中。请根据页面内容的需要，智能地选择和组合这些素材图片中的元素。"
         )
@@ -319,7 +322,11 @@ def get_image_generation_prompt(page_desc: str, outline_text: str,
     if extra_requirements and extra_requirements.strip():
         extra_req_text = f"\n\n额外要求（请务必遵循）：\n{extra_requirements}\n"
 
-# 该处参考了@歸藏的A工具箱
+    # 根据是否有模板生成不同的设计指南内容（保持原prompt要点顺序）
+    template_style_guideline = "- 配色和设计语言和模板图片严格相似。" if has_template else "- 严格按照风格描述进行设计。"
+    forbidden_template_text_guidline = "- 只参考风格设计，禁止出现模板中的文字。\n" if has_template else ""
+
+    # 该处参考了@歸藏的A工具箱
     prompt = (f"""\
 你是一位专家级UI UX演示设计师，专注于生成设计良好的PPT页面。
 当前PPT页面的页面描述如下:
@@ -337,11 +344,10 @@ def get_image_generation_prompt(page_desc: str, outline_text: str,
 
 <design_guidelines>
 - 要求文字清晰锐利, 画面为4K分辨率，16:9比例。
-- 配色和设计语言和模板图片严格相似。
+{template_style_guideline}
 - 根据内容自动设计最完美的构图，不重不漏地渲染"页面描述"中的文本。
 - 如非必要，禁止出现 markdown 格式符号（如 # 和 * 等）。
-- 只参考风格设计，禁止出现模板中的文字。
-- 使用大小恰当的装饰性图形或插画对空缺位置进行填补。
+{forbidden_template_text_guidline}- 使用大小恰当的装饰性图形或插画对空缺位置进行填补。
 </design_guidelines>
 {get_ppt_language_instruction(language)}
 {material_images_note}{extra_req_text}
