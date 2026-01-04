@@ -230,7 +230,7 @@ def export_editable_pptx(
     if editable_images:
         # 16:9 比例的标准值
         ASPECT_RATIO_16_9 = 16 / 9  # ≈ 1.7778
-        ASPECT_RATIO_TOLERANCE = 0.01  # 允许1%的误差
+        ASPECT_RATIO_TOLERANCE = 0.02  # 允许2%的误差
         
         # 检查所有图片是否为16:9比例，并找到最小尺寸
         min_width = float('inf')
