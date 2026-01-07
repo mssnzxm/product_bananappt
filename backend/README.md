@@ -1,6 +1,6 @@
 # Banana Slides Backend
 
-蕉幻（Banana Slides）后端服务 - AI驱动的PPT生成系统
+有机系统（Banana Slides）后端服务 - AI驱动的PPT生成系统
 
 ## 技术栈
 

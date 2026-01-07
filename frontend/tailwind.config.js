@@ -8,10 +8,10 @@ export default {
     extend: {
       colors: {
         'banana': {
-          50: '#FFF9E6',
-          100: '#FFE44D',
-          500: '#FFD700',
-          600: '#FFC700',
+          50: '#F1F8E9',
+          100: '#C5E1A5',
+          500: '#8BC34A',
+          600: '#689F38',
         },
       },
       borderRadius: {
@@ -19,7 +19,7 @@ export default {
         'panel': '16px',
       },
       boxShadow: {
-        'yellow': '0 4px 12px rgba(255, 215, 0, 0.3)',
+        'yellow': '0 4px 12px rgba(139, 195, 74, 0.3)',
         'sm': '0 1px 2px rgba(0,0,0,0.05)',
         'md': '0 4px 6px rgba(0,0,0,0.07)',
         'lg': '0 10px 15px rgba(0,0,0,0.1)',

@@ -1,6 +1,6 @@
-# 蕉幻 (Banana Slides) 前端
+# 有机系统 (Banana Slides) 前端
 
-这是蕉幻 AI PPT 生成器的前端应用。
+这是有机系统 AI PPT 生成器的前端应用。
 
 ## 技术栈
 
