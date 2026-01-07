@@ -519,16 +519,11 @@ export const Home: React.FC = () => {
       </nav>
 
       {/* 主内容 */}
-      <main className="relative max-w-5xl mx-auto px-3 md:px-4 py-8 md:py-12">
+      <main className="relative max-w-5xl mx-auto px-3 md:px-4 py-2 md:py-4">
         {/* Hero 标题区 */}
-        <div className="text-center mb-10 md:mb-16 space-y-4 md:space-y-6">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/60 backdrop-blur-sm rounded-full border border-banana-200/50 shadow-sm mb-4">
-            <span className="text-2xl animate-pulse"><Sparkles size={20} color="orange" /></span>
-            <span className="text-sm font-medium text-gray-700">基于 nano banana pro🍌 的原生 AI PPT 生成器</span>
-          </div>
-
+        <div className="text-center mb-4 md:mb-6 space-y-2 md:space-y-3">
           {/* 特性标签 */}
-          <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3 pt-4">
+          <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3">
             {[
               { icon: <Sparkles size={14} className="text-yellow-600" />, label: '一句话生成 PPT' },
               { icon: <FileEdit size={14} className="text-blue-500" />, label: '自然语言修改' },
