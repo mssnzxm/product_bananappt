@@ -8,14 +8,14 @@
 
 <p>
 
-[![GitHub Stars](https://img.shields.io/github/stars/Anionex/banana-slides?style=square)](https://github.com/Anionex/banana-slides/stargazers)
-[![GitHub Forks](https://img.shields.io/github/forks/Anionex/banana-slides?style=square)](https://github.com/Anionex/banana-slides/network)
-[![GitHub Watchers](https://img.shields.io/github/watchers/Anionex/banana-slides?style=square)](https://github.com/Anionex/banana-slides/watchers)
+[![GitHub Stars](https://img.shields.io/github/stars/mssnzxm/banana-slides?style=square)](https://github.com/mssnzxm/banana-slides/stargazers)
+[![GitHub Forks](https://img.shields.io/github/forks/mssnzxm/banana-slides?style=square)](https://github.com/mssnzxm/banana-slides/network)
+[![GitHub Watchers](https://img.shields.io/github/watchers/mssnzxm/banana-slides?style=square)](https://github.com/mssnzxm/banana-slides/watchers)
 
-[![Version](https://img.shields.io/badge/version-v0.3.0-4CAF50.svg)](https://github.com/Anionex/banana-slides)
+[![Version](https://img.shields.io/badge/version-v0.3.0-4CAF50.svg)](https://github.com/mssnzxm/banana-slides)
 ![Docker](https://img.shields.io/badge/Docker-Build-2496ED?logo=docker&logoColor=white)
-[![GitHub issues](https://img.shields.io/github/issues-raw/Anionex/banana-slides)](https://github.com/Anionex/banana-slides/issues)
-[![GitHub pull requests](https://img.shields.io/github/issues-pr-raw/Anionex/banana-slides)](https://github.com/Anionex/banana-slides/pulls)
+[![GitHub issues](https://img.shields.io/github/issues-raw/mssnzxm/banana-slides)](https://github.com/mssnzxm/banana-slides/issues)
+[![GitHub pull requests](https://img.shields.io/github/issues-pr-raw/mssnzxm/banana-slides)](https://github.com/mssnzxm/banana-slides/pulls)
 
 
 </p> 
@@ -75,7 +75,7 @@
 
 </div>
 
-更多可见<a href="https://github.com/Anionex/banana-slides/issues/2" > 使用案例 </a>
+更多可见<a href="https://github.com/mssnzxm/banana-slides/issues/2" > 使用案例 </a>
 
 
 ## 🎯 功能介绍
@@ -137,7 +137,7 @@
   * 更精确的文字大小和文字位置还原逻辑
   * 优化导出工作流，大大减少了导出后背景图残留文字的现象；
   * 支持页面多选逻辑，灵活选择需要生成和导出的具体页面。
-  * **详细效果和使用方法见 https://github.com/Anionex/banana-slides/issues/121**
+  * **详细效果和使用方法见 https://github.com/mssnzxm/banana-slides/issues/121**
 
 - 【12-27】: 加入了对无图片模板模式的支持和较高质量的文字预设，现在可以通过纯文字描述的方式来控制ppt页面风格
 - 【12-24】: main分支加入了基于nano-banana-pro背景提取的可编辑pptx导出方法（目前Beta）
@@ -180,7 +180,7 @@
 
 0. **克隆代码仓库**
 ```bash
-git clone https://github.com/Anionex/banana-slides
+git clone https://github.com/mssnzxm/banana-slides
 cd banana-slides
 ```
 
@@ -215,7 +215,7 @@ OPENAI_API_BASE=https://api.openai.com/v1
 ...
 ```
 
-**使用新版可编辑导出配置方法，获得更好的可编辑导出效果**: 需在[百度智能云平台](https://console.bce.baidu.com/iam/#/iam/apikey/list)中获取API KEY，填写在.env文件中的BAIDU_OCR_API_KEY字段（有充足的免费使用额度）。详见https://github.com/Anionex/banana-slides/issues/121 中的说明
+**使用新版可编辑导出配置方法，获得更好的可编辑导出效果**: 需在[百度智能云平台](https://console.bce.baidu.com/iam/#/iam/apikey/list)中获取API KEY，填写在.env文件中的BAIDU_OCR_API_KEY字段（有充足的免费使用额度）。详见https://github.com/mssnzxm/banana-slides/issues/121 中的说明
 
 
 <details>
@@ -314,7 +314,7 @@ docker compose up -d
 
 0. **克隆代码仓库**
 ```bash
-git clone https://github.com/Anionex/banana-slides
+git clone https://github.com/mssnzxm/banana-slides
 cd banana-slides
 ```
 
@@ -552,9 +552,9 @@ banana-slides/
 ## 🤝 贡献指南
 
 欢迎通过
-[Issue](https://github.com/Anionex/banana-slides/issues)
+[Issue](https://github.com/mssnzxm/banana-slides/issues)
 和
-[Pull Request](https://github.com/Anionex/banana-slides/pulls)
+[Pull Request](https://github.com/mssnzxm/banana-slides/pulls)
 为本项目贡献力量！
 
 ## 📄 许可证
@@ -601,7 +601,7 @@ banana-slides/
 
 - 项目贡献者们：
 
-[![Contributors](https://contrib.rocks/image?repo=Anionex/banana-slides)](https://github.com/Anionex/banana-slides/graphs/contributors)
+[![Contributors](https://contrib.rocks/image?repo=mssnzxm/banana-slides)](https://github.com/mssnzxm/banana-slides/graphs/contributors)
 
 - [Linux.do](https://linux.do/): 新的理想型社区
   
@@ -613,19 +613,19 @@ banana-slides/
 
 感谢以下朋友对项目的无偿赞助支持：
 > @雅俗共赏、@曹峥、@以年观日、@John、@azazo1、@刘聪NLP、@🍟、@苍何、@biubiu  
-> 如对赞助列表有疑问（如赞赏后没看到您的名字），可<a href="mailto:anionex@qq.com">联系作者</a>
+> 如对赞助列表有疑问（如赞赏后没看到您的名字），可<a href="mailto:mssnzxm@qq.com">联系作者</a>
  
 ## 📈 项目统计
 
-<a href="https://www.star-history.com/#Anionex/banana-slides&type=Timeline&legend=top-left">
+<a href="https://www.star-history.com/#mssnzxm/banana-slides&type=Timeline&legend=top-left">
 
  <picture>
 
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=Anionex/banana-slides&type=Timeline&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=mssnzxm/banana-slides&type=Timeline&theme=dark&legend=top-left" />
 
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=Anionex/banana-slides&type=Timeline&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=mssnzxm/banana-slides&type=Timeline&legend=top-left" />
 
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=Anionex/banana-slides&type=Timeline&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=mssnzxm/banana-slides&type=Timeline&legend=top-left" />
 
  </picture>
 
