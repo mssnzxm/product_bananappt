@@ -1,39 +1,90 @@
-【一】阿里云安装环境及步骤：
-1，申请ECS服务器，选择Alibaba Cloud Linux 3.2104 LTS 64位操作系统。
-该系统版本新，所以支持常用开发语言环境。
-2，ECS实例启动后，通过自动化运维页面，安装Docker、NodeJs、Python3.13环境有的新版本。
-3，安装git。
-sudo yum update -y
-sudo yum install -y git
-4，下载代码：
-git clone https://github.com/mssnzxm/banana-slides
-git pull
+# Banana Slides 开发环境配置指南
 
-【二】自己编译安装
-cd banana-slides
-##安装uv工具
-curl -LsSf https://astral.sh/uv/install.sh | sh
-##安装依赖
-uv sync
-##配置环境变量
-cp .env.example .env
-进入前端目录
-cd frontend
-npm install
-##启动后端服务
-cd backend
-uv run alembic upgrade head && uv run python app.py
-由于uv默认用了python3.14导致错误，需要在项目下，增加一个配置文件：
-# 在backend目录下新增uv.toml文件，内容如下：
+## 📋 概述
+本文档记录了Banana Slides 项目的安装部署方式：基于阿里云环境的本地编译安装和Docker容器化部署。
+
+## 🚀 公共部分：阿里云环境部署
+
+### 环境准备
+- **操作系统**: Alibaba Cloud Linux 3.2104 LTS 64位
+- **优势**: 系统版本新，完美支持主流开发语言环境
+
+### 部署步骤
+1. **ECS实例配置**: 
+   - 通过自动化运维页面安装 Docker、Node.js、Python 3.13 最新版本
+
+2. **基础工具安装**:
+   ```bash
+   sudo yum update -y
+   sudo yum install -y git
+   ```
+
+3. **代码获取**:
+   ```bash
+   git clone https://github.com/mssnzxm/banana-slides
+   git pull
+   ```
+
+## 💻 安装方式一：本地编译安装
+
+### 前置条件
+- 确保已安装 Python 3.13.3
+
+### 安装流程
+
+1. **安装 uv 包管理工具**:
+   ```bash
+   curl -LsSf https://astral.sh/uv/install.sh | sh
+   uv sync
+   ```
+
+2. **环境配置**:
+   - 复制环境变量模板: `cp .env.example .env`
+
+3. **前端依赖安装**:
+   ```bash
+   cd frontend
+   npm install
+   ```
+
+4. **后端服务启动**:
+   ```bash
+   cd backend
+   uv run alembic upgrade head && uv run python app.py
+   ```
+
+### Python版本配置
+**注意事项**: uv 默认使用 Python 3.14 可能导致错误
+
+**解决方案**: 在 `backend` 目录创建 `uv.toml` 文件
+```toml
 [python]
 version = "3.13.3"
 path = "/usr/local/python3.13/bin/python3.13"
+```
 
+## 🐳 安装方式二：Docker容器化部署
 
-【三】通过docker来一站式编译安装。
-##编译
-docker compose build --no-cache
-##启动服务
-docker compose up -d
-##停止服务
-docker compose down
+### 一键式部署命令
+
+1. **镜像构建**:
+   ```bash
+   docker compose build --no-cache
+   ```
+
+2. **服务启动**:
+   ```bash
+   docker compose up -d
+   ```
+
+3. **服务停止**:
+   ```bash
+   docker compose down
+   ```
+
+## 🎯 关键要点总结
+
+- **Python版本要求**: 需要 Python 3.10及以上 版本
+- **环境隔离**: 提供了多种部署方式，适应不同使用场景
+- **自动化程度**: Docker 方式最为简便，适合生产环境
+- **开发友好**: 本地编译方式便于开发和调试
