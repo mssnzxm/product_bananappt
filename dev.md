@@ -21,7 +21,7 @@
 
 3. **代码获取**:
    ```bash
-   git clone https://github.com/mssnzxm/banana-slides
+   git clone https://github.com/mssnzxm/banana-slides.git
    git pull
    ```
 
