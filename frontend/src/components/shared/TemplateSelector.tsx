@@ -156,7 +156,7 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
 
   return (
     <>
-      <div className="space-y-4">
+      <div className="space-y-2">
         {/* 用户已保存的模板 */}
         {userTemplates.length > 0 && (
           <div>
@@ -204,7 +204,7 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
 
         <div>
           <h4 className="text-sm font-medium text-gray-700 mb-2">预设模板</h4>
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-6 gap-2">
             {/* 预设模板 */}
             {presetTemplates.map((template) => (
               <div
@@ -225,28 +225,15 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                     />
                     {selectedPresetTemplateId === template.id && (
                       <div className="absolute inset-0 bg-banana-500 bg-opacity-20 flex items-center justify-center pointer-events-none">
-                        <span className="text-white font-semibold text-sm">已选择</span>
+                        <span className="text-white font-semibold text-xs">已选择</span>
                       </div>
                     )}
                   </>
                 ) : (
-                  <span className="text-sm text-gray-500">{template.name}</span>
+                  <span className="text-xs text-gray-500">{template.name}</span>
                 )}
               </div>
             ))}
-
-            {/* 上传新模板 */}
-            <label className="aspect-[4/3] rounded-lg border-2 border-dashed border-gray-300 hover:border-banana-500 cursor-pointer transition-all flex flex-col items-center justify-center gap-2 relative overflow-hidden">
-              <span className="text-2xl">+</span>
-              <span className="text-sm text-gray-500">上传模板</span>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleTemplateUpload}
-                className="hidden"
-                disabled={isLoadingTemplates}
-              />
-            </label>
           </div>
           
           {/* 在预览页显示：上传模板时是否保存到模板库的选项 */}

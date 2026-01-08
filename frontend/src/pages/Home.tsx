@@ -1,11 +1,15 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, FileText, FileEdit, ImagePlus, Paperclip, Palette, Lightbulb, Search, Settings } from 'lucide-react';
-import { Button, Textarea, Card, useToast, MaterialGeneratorModal, ReferenceFileList, ReferenceFileSelector, FilePreviewModal, ImagePreviewList } from '@/components/shared';
+import { Sparkles, FileText, FileEdit, ImagePlus, Paperclip, Palette, Lightbulb, Search, Settings, Clock } from 'lucide-react';
+import { Button, Textarea, Card, useToast, MaterialGeneratorModal, ReferenceFileList, ReferenceFileSelector, FilePreviewModal, ImagePreviewList, Loading } from '@/components/shared';
 import { TemplateSelector, getTemplateFile } from '@/components/shared/TemplateSelector';
 import { listUserTemplates, type UserTemplate, uploadReferenceFile, type ReferenceFile, associateFileToProject, triggerFileParse, uploadMaterial, associateMaterialsToProject } from '@/api/endpoints';
 import { useProjectStore } from '@/store/useProjectStore';
 import { PRESET_STYLES } from '@/config/presetStyles';
+import * as api from '@/api/endpoints';
+import { normalizeProject } from '@/utils';
+import { getProjectTitle, formatDate } from '@/utils/projectUtils';
+import type { Project } from '@/types';
 
 type CreationType = 'idea' | 'outline' | 'description';
 
@@ -30,7 +34,13 @@ export const Home: React.FC = () => {
   const [templateStyle, setTemplateStyle] = useState('');
   const [hoveredPresetId, setHoveredPresetId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const templateFileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  
+  // 历史项目相关状态
+  const [recentProjects, setRecentProjects] = useState<Project[]>([]);
+  const [isLoadingProjects, setIsLoadingProjects] = useState(false);
+  const [projectsError, setProjectsError] = useState<string | null>(null);
 
   // 检查是否有当前项目 & 加载用户模板
   useEffect(() => {
@@ -49,7 +59,45 @@ export const Home: React.FC = () => {
       }
     };
     loadTemplates();
+    
+    // 加载历史项目
+    loadRecentProjects();
   }, []);
+
+  // 加载历史项目
+  const loadRecentProjects = async () => {
+    setIsLoadingProjects(true);
+    setProjectsError(null);
+    try {
+      const response = await api.listProjects(6, 0); // 只加载最近6个项目
+      if (response.data?.projects) {
+        const normalizedProjects = response.data.projects.map(normalizeProject);
+        setRecentProjects(normalizedProjects);
+      }
+    } catch (err: any) {
+      console.error('加载历史项目失败:', err);
+      setProjectsError(err.message || '加载历史项目失败');
+    } finally {
+      setIsLoadingProjects(false);
+    }
+  };
+
+  // 处理点击历史项目
+  const handleProjectClick = async (project: Project) => {
+    const projectId = project.id || project.project_id;
+    if (!projectId) return;
+
+    try {
+      localStorage.setItem('currentProjectId', projectId);
+      navigate(`/project/${projectId}/detail`);
+    } catch (err: any) {
+      console.error('打开项目失败:', err);
+      show({ 
+        message: '打开项目失败: ' + (err.message || '未知错误'), 
+        type: 'error' 
+      });
+    }
+  };
 
   const handleOpenMaterialModal = () => {
     // 在主页始终生成全局素材，不关联任何项目
@@ -325,6 +373,31 @@ export const Home: React.FC = () => {
       placeholder: '粘贴你的完整页面描述...\n\n例如：\n第 1 页\n标题：人工智能的诞生\n内容：1950 年，图灵提出"图灵测试"...\n\n第 2 页\n标题：AI 的发展历程\n内容：1950年代：符号主义...\n...',
       description: '已有完整描述？AI 将自动解析出大纲并切分为每页描述，直接生成图片',
     },
+  };
+
+  const handleTemplateFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      // 上传到用户模板库
+      const response = await api.uploadUserTemplate(file);
+      if (response.data) {
+        const template = response.data;
+        setUserTemplates(prev => [template, ...prev]);
+        setSelectedTemplateId(template.template_id);
+        setSelectedPresetTemplateId(null);
+        setSelectedTemplate(null);
+        setUseTemplateStyle(false); // 切换回模板模式
+        show({ message: '模板上传成功', type: 'success' });
+      }
+    } catch (error: any) {
+      console.error('上传模板失败:', error);
+      show({ message: '模板上传失败: ' + (error.message || '未知错误'), type: 'error' });
+    }
+    
+    // 清空 input，允许重复选择同一文件
+    e.target.value = '';
   };
 
   const handleTemplateSelect = async (templateFile: File | null, templateId?: string) => {
@@ -654,30 +727,44 @@ export const Home: React.FC = () => {
                   选择风格模板
                 </h3>
               </div>
-              {/* 无模板图模式开关 */}
-              <label className="flex items-center gap-2 cursor-pointer group">
-                <span className="text-sm text-gray-600 group-hover:text-gray-900 transition-colors">
-                  使用文字描述风格
-                </span>
-                <div className="relative">
+              <div className="flex items-center gap-3">
+                {/* 上传模板按钮 */}
+                <label className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 cursor-pointer hover:bg-gray-100 rounded-lg transition-colors">
+                  <ImagePlus size={16} />
+                  <span>上传模板</span>
                   <input
-                    type="checkbox"
-                    checked={useTemplateStyle}
-                    onChange={(e) => {
-                      setUseTemplateStyle(e.target.checked);
-                      // 切换到无模板图模式时，清空模板选择
-                      if (e.target.checked) {
-                        setSelectedTemplate(null);
-                        setSelectedTemplateId(null);
-                        setSelectedPresetTemplateId(null);
-                      }
-                      // 不再清空风格描述，允许用户保留已输入的内容
-                    }}
-                    className="sr-only peer"
+                    ref={templateFileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleTemplateFileUpload}
+                    className="hidden"
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-banana-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-banana-500"></div>
-                </div>
-              </label>
+                </label>
+                {/* 无模板图模式开关 */}
+                <label className="flex items-center gap-2 cursor-pointer group">
+                  <span className="text-sm text-gray-600 group-hover:text-gray-900 transition-colors">
+                    使用文字描述风格
+                  </span>
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      checked={useTemplateStyle}
+                      onChange={(e) => {
+                        setUseTemplateStyle(e.target.checked);
+                        // 切换到无模板图模式时，清空模板选择
+                        if (e.target.checked) {
+                          setSelectedTemplate(null);
+                          setSelectedTemplateId(null);
+                          setSelectedPresetTemplateId(null);
+                        }
+                        // 不再清空风格描述，允许用户保留已输入的内容
+                      }}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-banana-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-banana-500"></div>
+                  </div>
+                </label>
+              </div>
             </div>
             
             {/* 根据模式显示不同的内容 */}
@@ -753,6 +840,80 @@ export const Home: React.FC = () => {
           </div>
 
         </Card>
+
+        {/* 历史项目列表 */}
+        {recentProjects.length > 0 && (
+          <div className="mt-6 md:mt-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg md:text-xl font-semibold text-gray-900 flex items-center gap-2">
+                <Clock size={20} className="text-banana-600" />
+                最近项目
+              </h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate('/history')}
+                className="text-sm text-banana-600 hover:text-banana-700"
+              >
+                查看全部
+              </Button>
+            </div>
+            
+            {isLoadingProjects ? (
+              <div className="flex items-center justify-center py-8">
+                <Loading message="加载中..." />
+              </div>
+            ) : projectsError ? (
+              <Card className="p-6 text-center">
+                <p className="text-gray-600">{projectsError}</p>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {recentProjects.slice(0, 6).map((project) => {
+                  const projectId = project.id || project.project_id;
+                  if (!projectId) return null;
+                  
+                  const title = getProjectTitle(project);
+                  const pageCount = project.pages?.length || 0;
+                  const updatedAt = formatDate(project.updated_at || project.created_at);
+                  
+                  return (
+                    <Card
+                      key={projectId}
+                      className="p-4 hover:shadow-lg cursor-pointer transition-all border border-gray-200 hover:border-banana-300"
+                      onClick={() => handleProjectClick(project)}
+                    >
+                      <div className="flex flex-col h-full">
+                        <h3 className="text-base font-semibold text-gray-900 mb-2 truncate">
+                          {title}
+                        </h3>
+                        <div className="flex items-center gap-3 text-xs text-gray-500 mb-3">
+                          <span className="flex items-center gap-1">
+                            <FileText size={12} />
+                            {pageCount} 页
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Clock size={12} />
+                            {updatedAt}
+                          </span>
+                        </div>
+                        <div className="mt-auto">
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            className="w-full text-xs"
+                          >
+                            继续编辑
+                          </Button>
+                        </div>
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </main>
       <ToastContainer />
       {/* 素材生成模态 - 在主页始终生成全局素材 */}
