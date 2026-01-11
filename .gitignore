@@ -57,3 +57,4 @@ uploads/
 # 本地备份目录（保存测试文件等）
 _local_backup/
 .DS_Store
+v0_demo/video/hot_video.mp4
