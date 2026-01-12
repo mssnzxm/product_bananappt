@@ -1,13 +1,8 @@
 import React, { useState } from 'react';
-import { Video, Upload, Play, Clock, X, CheckCircle, AlertTriangle } from 'lucide-react';
-import { Button, Card, Textarea, useToast, Loading } from '@/components/shared';
+import { Video, Upload, Play, Clock, X, CheckCircle, AlertTriangle, Edit2, Save } from 'lucide-react';
+import { Button, Card, Textarea, useToast, Loading, Markdown } from '@/components/shared';
 import { apiClient } from '@/api/client';
 import type { ApiResponse } from '@/types';
-
-interface VideoAnalysisRequest {
-  file: File;
-  prompt?: string;
-}
 
 interface VideoAnalysisResponse {
   analysis: string;
@@ -25,11 +20,15 @@ export const VideoAnalysis: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [analysisPrompt, setAnalysisPrompt] = useState('请详细分析这个视频的内容');
   const [analysisResult, setAnalysisResult] = useState<string>('');
+  const [editingResult, setEditingResult] = useState<string>('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [fileId, setFileId] = useState<string>('');
   const [status, setStatus] = useState<VideoAnalysisStatus>({
     status: 'UPLOADING',
     message: '选择视频文件开始分析'
   });
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -100,6 +99,7 @@ export const VideoAnalysis: React.FC = () => {
 
       if (response.data.data) {
         setAnalysisResult(response.data.data.analysis);
+        setFileId(response.data.data.file_id);
         setStatus({
           status: 'COMPLETED',
           message: '视频分析完成'
@@ -137,6 +137,46 @@ export const VideoAnalysis: React.FC = () => {
   };
 
   const { show, ToastContainer } = useToast();
+
+  // 开始编辑分析结果
+  const handleStartEdit = () => {
+    setEditingResult(analysisResult);
+    setIsEditing(true);
+  };
+
+  // 保存编辑后的分析结果
+  const handleSaveEdit = async () => {
+    if (!fileId) {
+      show({ message: '无法保存：缺少文件ID', type: 'error' });
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const response = await apiClient.put(`/api/video-analysis/${fileId}`, {
+        analysis_content: editingResult
+      });
+
+      if (response.data.data) {
+        setAnalysisResult(response.data.data.analysis_content);
+        setIsEditing(false);
+        show({ message: '分析结果已保存', type: 'success' });
+      }
+    } catch (error: any) {
+      console.error('保存分析结果失败:', error);
+      show({ 
+        message: `保存失败: ${error?.response?.data?.error?.message || error.message || '未知错误'}`, 
+        type: 'error' 
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // 取消编辑
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-banana-50/30 to-blue-50/50 relative overflow-hidden">
@@ -320,10 +360,53 @@ export const VideoAnalysis: React.FC = () => {
             {/* 分析结果 */}
             {analysisResult && (
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900">分析结果</h3>
-                <div className="bg-gray-50 rounded-lg p-5 border border-gray-200">
-                  <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">{analysisResult}</p>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-gray-900">分析结果</h3>
+                  {!isEditing ? (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={handleStartEdit}
+                      className="gap-1"
+                    >
+                      <Edit2 size={16} />
+                      编辑
+                    </Button>
+                  ) : (
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={handleCancelEdit}
+                      >
+                        取消
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={handleSaveEdit}
+                        className="gap-1"
+                        loading={isSaving}
+                        disabled={isSaving}
+                      >
+                        <Save size={16} />
+                        保存
+                      </Button>
+                    </div>
+                  )}
                 </div>
+                {isEditing ? (
+                  <Textarea
+                    value={editingResult}
+                    onChange={(e) => setEditingResult(e.target.value)}
+                    placeholder="编辑分析结果（支持Markdown格式）"
+                    rows={10}
+                    className="border-2 border-gray-200 focus:border-purple-400 transition-colors"
+                  />
+                ) : (
+                  <div className="bg-gray-50 rounded-lg p-5 border border-gray-200">
+                    <Markdown>{analysisResult}</Markdown>
+                  </div>
+                )}
               </div>
             )}
           </Card>

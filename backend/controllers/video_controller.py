@@ -10,6 +10,7 @@ from werkzeug.utils import secure_filename
 from utils import success_response, error_response, bad_request
 from google import genai
 from google.genai import types
+from models import VideoAnalysis
 
 logger = logging.getLogger(__name__)
 video_bp = Blueprint('video', __name__, url_prefix='/api')
@@ -134,6 +135,17 @@ def analyze_video():
             
             logger.info("Video analysis completed successfully")
             
+            # Save analysis result to database
+            try:
+                video_analysis = VideoAnalysis.create_or_update(
+                    file_id=uploaded_file.name,
+                    analysis_content=analysis_result
+                )
+                logger.info(f"Saved video analysis to database: {video_analysis.id}")
+            except Exception as db_error:
+                logger.error(f"Failed to save analysis result to database: {str(db_error)}")
+                # Continue even if database save fails
+            
             return success_response({
                 'analysis': analysis_result,
                 'file_id': uploaded_file.name,
@@ -146,4 +158,60 @@ def analyze_video():
             
     except Exception as e:
         logger.error(f"Video analysis failed: {str(e)}", exc_info=True)
+        return error_response('SERVER_ERROR', str(e), 500)
+
+
+@video_bp.route('/video-analysis/<path:file_id>', methods=['GET'])
+def get_video_analysis(file_id):
+    """
+    GET /api/video-analysis/<file_id> - Get video analysis result by file_id
+    
+    Response:
+    - analysis_content: Video analysis result
+    - file_id: Unique file identifier
+    - created_at: Creation timestamp
+    - updated_at: Last update timestamp
+    """
+    try:
+        video_analysis = VideoAnalysis.get_by_file_id(file_id)
+        if not video_analysis:
+            return error_response('ANALYSIS_NOT_FOUND', 'Video analysis not found', 404)
+        
+        return success_response(video_analysis.to_dict())
+    except Exception as e:
+        logger.error(f"Failed to get video analysis: {str(e)}", exc_info=True)
+        return error_response('SERVER_ERROR', str(e), 500)
+
+
+@video_bp.route('/video-analysis/<path:file_id>', methods=['PUT'])
+def update_video_analysis(file_id):
+    """
+    PUT /api/video-analysis/<file_id> - Update video analysis result
+    
+    Request body:
+    - analysis_content: Updated analysis content (Markdown)
+    
+    Response:
+    - analysis_content: Updated video analysis result
+    - file_id: Unique file identifier
+    - updated_at: Last update timestamp
+    """
+    try:
+        # Get request body
+        data = request.get_json()
+        if not data or 'analysis_content' not in data:
+            return bad_request("analysis_content is required")
+        
+        analysis_content = data['analysis_content']
+        
+        # Update video analysis
+        video_analysis = VideoAnalysis.create_or_update(
+            file_id=file_id,
+            analysis_content=analysis_content
+        )
+        
+        logger.info(f"Updated video analysis: {video_analysis.id}")
+        return success_response(video_analysis.to_dict())
+    except Exception as e:
+        logger.error(f"Failed to update video analysis: {str(e)}", exc_info=True)
         return error_response('SERVER_ERROR', str(e), 500)
