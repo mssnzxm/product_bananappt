@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Video, Upload, Play, Clock, X, CheckCircle, AlertTriangle, Edit2, Save } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Video, Upload, Play, Clock, X, CheckCircle, AlertTriangle, Edit2, Save, Home } from 'lucide-react';
 import { Button, Card, Textarea, useToast, Loading, Markdown } from '@/components/shared';
 import { apiClient } from '@/api/client';
 import type { ApiResponse } from '@/types';
@@ -17,6 +18,7 @@ interface VideoAnalysisStatus {
 }
 
 export const VideoAnalysis: React.FC = () => {
+  const navigate = useNavigate();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [analysisPrompt, setAnalysisPrompt] = useState('请详细分析这个视频的内容');
   const [analysisResult, setAnalysisResult] = useState<string>('');
@@ -255,6 +257,18 @@ export const VideoAnalysis: React.FC = () => {
             <span className="text-xl md:text-2xl font-bold bg-gradient-to-r from-banana-600 via-green-500 to-teal-500 bg-clip-text text-transparent">
               有机系统
             </span>
+          </div>
+          <div className="flex items-center gap-2 md:gap-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              icon={<Home size={16} className="md:w-[18px] md:h-[18px]" />}
+              onClick={() => navigate('/')}
+              className="text-xs md:text-sm hover:bg-banana-100/60 hover:shadow-sm hover:scale-105 transition-all duration-200 font-medium"
+            >
+              <span className="hidden sm:inline">主页</span>
+              <span className="sm:hidden">主页</span>
+            </Button>
           </div>
         </div>
       </nav>

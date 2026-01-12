@@ -630,6 +630,25 @@ export const Home: React.FC = () => {
             </span>
           </div>
           <div className="flex items-center gap-2 md:gap-3">
+            {/* 桌面端：带文字的视频分析按钮 */}
+            <Button
+              variant="ghost"
+              size="sm"
+              icon={<Film size={16} className="md:w-[18px] md:h-[18px]" />}
+              onClick={() => navigate('/video-analysis')}
+              className="hidden sm:inline-flex hover:bg-banana-100/60 hover:shadow-sm hover:scale-105 transition-all duration-200 font-medium"
+            >
+              <span className="hidden md:inline">视频分析</span>
+            </Button>
+            {/* 手机端：仅图标的视频分析按钮 */}
+            <Button
+              variant="ghost"
+              size="sm"
+              icon={<Film size={16} />}
+              onClick={() => navigate('/video-analysis')}
+              className="sm:hidden hover:bg-banana-100/60 hover:shadow-sm hover:scale-105 transition-all duration-200"
+              title="视频分析"
+            />
             {/* 桌面端：带文字的素材生成按钮 */}
             <Button
               variant="ghost"
