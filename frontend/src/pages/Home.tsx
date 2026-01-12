@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sparkles, FileText, FileEdit, ImagePlus, Paperclip, Palette, Lightbulb, Search, Settings, Clock, Film } from 'lucide-react';
-import { Button, Textarea, Card, useToast, MaterialGeneratorModal, ReferenceFileList, ReferenceFileSelector, FilePreviewModal, ImagePreviewList, Loading } from '@/components/shared';
+import { Button, Textarea, Card, useToast, MaterialGeneratorModal, ReferenceFileList, ReferenceFileSelector, FilePreviewModal, ImagePreviewList, Loading, Markdown } from '@/components/shared';
 import { TemplateSelector, getTemplateFile } from '@/components/shared/TemplateSelector';
 import { listUserTemplates, type UserTemplate, uploadReferenceFile, type ReferenceFile, associateFileToProject, triggerFileParse, uploadMaterial, associateMaterialsToProject, analyzeVideo } from '@/api/endpoints';
 import { useProjectStore } from '@/store/useProjectStore';
@@ -594,8 +594,8 @@ export const Home: React.FC = () => {
       
       if (activeTab === 'idea' || activeTab === 'outline') {
         navigate(`/project/${projectId}/outline`);
-      } else if (activeTab === 'description') {
-        // 从描述生成：直接跳到描述生成页（因为已经自动生成了大纲和描述）
+      } else if (activeTab === 'description' || activeTab === 'video') {
+        // 从描述生成或视频生成：直接跳到描述生成页（因为已经自动生成了大纲和描述）
         navigate(`/project/${projectId}/detail`);
       }
     } catch (error: any) {
@@ -767,10 +767,10 @@ export const Home: React.FC = () => {
                       
                       {/* 视频分析结果预览 */}
                       {videoAnalysis && (
-                        <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                          <p className="text-xs font-medium text-gray-700 mb-2">视频分析结果：</p>
-                          <div className="text-xs text-gray-600 line-clamp-4 max-h-32 overflow-y-auto pr-2">
-                            {videoAnalysis}
+                        <div className="mt-4 p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+                          <p className="text-sm font-medium text-gray-800 mb-3">视频分析结果：</p>
+                          <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                            <Markdown className="text-left">{videoAnalysis}</Markdown>
                           </div>
                         </div>
                       )}

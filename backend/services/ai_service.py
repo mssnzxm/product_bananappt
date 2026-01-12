@@ -170,9 +170,14 @@ class AIService:
             
         Raises:
             json.JSONDecodeError: JSON解析失败（重试3次后仍失败）
+            ValueError: 生成的文本为空
         """
         # 调用AI生成文本
         response_text = self.text_provider.generate_text(prompt, thinking_budget=thinking_budget)
+        
+        # 检查生成的文本是否为空
+        if response_text is None or not response_text.strip():
+            raise ValueError("生成的文本为空，无法解析为JSON")
         
         # 清理响应文本：移除markdown代码块标记和多余空白
         cleaned_text = response_text.strip().strip("```json").strip("```").strip()
@@ -202,7 +207,7 @@ class AIService:
             
         Raises:
             json.JSONDecodeError: JSON解析失败（重试3次后仍失败）
-            ValueError: text_provider 不支持图片输入
+            ValueError: text_provider 不支持图片输入或生成的文本为空
         """
         # 调用AI生成文本（带图片）
         if hasattr(self.text_provider, 'generate_with_image'):
@@ -219,6 +224,10 @@ class AIService:
             )
         else:
             raise ValueError("text_provider 不支持图片输入")
+        
+        # 检查生成的文本是否为空
+        if response_text is None or not response_text.strip():
+            raise ValueError("生成的文本为空，无法解析为JSON")
         
         # 清理响应文本：移除markdown代码块标记和多余空白
         cleaned_text = response_text.strip().removeprefix("```json").removeprefix("```").removesuffix("```").strip()
@@ -346,6 +355,11 @@ class AIService:
         )
         
         response_text = self.text_provider.generate_text(desc_prompt, thinking_budget=1000)
+        
+        # 检查生成的文本是否为空
+        if response_text is None or not response_text.strip():
+            logger.warning(f"页面描述生成失败，返回空结果。页面索引: {page_index}, 大纲: {page_outline.get('title', '未知')}")
+            return ""
         
         return dedent(response_text)
     
