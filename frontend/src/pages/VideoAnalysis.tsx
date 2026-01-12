@@ -79,10 +79,25 @@ export const VideoAnalysis: React.FC = () => {
       progress: 0
     });
 
+    // 将进度定时器变量移到 try-catch 外部，确保作用域正确
+    let progressInterval: NodeJS.Timeout | undefined;
+
     try {
       const formData = new FormData();
       formData.append('file', selectedFile);
       formData.append('prompt', analysisPrompt);
+
+      // 创建一个进度更新定时器，用于模拟上传后的处理进度
+      const startProgressTimer = () => {
+        let currentProgress = 0;
+        progressInterval = setInterval(() => {
+          currentProgress = Math.min(currentProgress + 5, 90); // 最多到90%，留10%给最终完成
+          setStatus(prev => ({
+            ...prev,
+            progress: currentProgress
+          }));
+        }, 1000);
+      };
 
       // 上传并分析视频
       const response = await apiClient.post<ApiResponse<VideoAnalysisResponse>>('/api/video-analysis', formData, {
@@ -93,21 +108,57 @@ export const VideoAnalysis: React.FC = () => {
               ...prev,
               progress
             }));
+            
+            // 当上传进度达到100%时，切换到处理状态并开始模拟进度
+            if (progress === 100) {
+              setStatus(prev => ({
+                ...prev,
+                status: 'PROCESSING',
+                message: '视频上传完成，正在分析内容...'
+              }));
+              startProgressTimer();
+            }
           }
         }
       });
 
-      if (response.data.data) {
-        setAnalysisResult(response.data.data.analysis);
-        setFileId(response.data.data.file_id);
-        setStatus({
-          status: 'COMPLETED',
-          message: '视频分析完成'
-        });
+      // 清除进度定时器
+      if (progressInterval) {
+        clearInterval(progressInterval);
+        progressInterval = undefined;
+      }
+
+      if (response.data && response.data.data) {
+        // 设置为100%完成
+        setStatus(prev => ({
+          ...prev,
+          progress: 100
+        }));
+        
+        // 短暂延迟后更新状态为完成
+        setTimeout(() => {
+          const data = response.data.data;
+          if (data) {
+            setAnalysisResult(data.analysis);
+            setFileId(data.file_id);
+          }
+          setStatus({
+            status: 'COMPLETED',
+            message: '视频分析完成'
+          });
+        }, 500);
+        
         show({ message: '视频分析完成', type: 'success' });
       }
     } catch (error: any) {
       console.error('视频分析失败:', error);
+      
+      // 清除可能存在的定时器
+      if (progressInterval) {
+        clearInterval(progressInterval);
+        progressInterval = undefined;
+      }
+      
       setStatus({
         status: 'FAILED',
         message: `分析失败：${error?.response?.data?.error?.message || error.message || '未知错误'}`
@@ -117,6 +168,10 @@ export const VideoAnalysis: React.FC = () => {
         type: 'error' 
       });
     } finally {
+      // 确保定时器被清除
+      if (progressInterval) {
+        clearInterval(progressInterval);
+      }
       setIsAnalyzing(false);
     }
   };
