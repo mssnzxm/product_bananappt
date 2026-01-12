@@ -41,16 +41,17 @@
 2. **环境配置**:
    - 复制环境变量模板: `cp .env.example .env`
 
-3. **前端依赖安装**:
-   ```bash
-   cd frontend
-   npm install
-   ```
-
-4. **后端服务启动**:
+3. **后端服务启动**:
    ```bash
    cd backend
    uv run alembic upgrade head && uv run python app.py
+   ```
+
+4 **前端依赖安装和启动**:
+   ```bash
+   cd frontend
+   npm install
+   npm run dev
    ```
 
 ### Python版本配置

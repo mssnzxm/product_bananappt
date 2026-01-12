@@ -6,6 +6,7 @@ import { OutlineEditor } from './pages/OutlineEditor';
 import { DetailEditor } from './pages/DetailEditor';
 import { SlidePreview } from './pages/SlidePreview';
 import { SettingsPage } from './pages/Settings';
+import { VideoAnalysis } from './pages/VideoAnalysis';
 import { useProjectStore } from './store/useProjectStore';
 import { useToast, GithubLink } from './components/shared';
 
@@ -35,6 +36,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/history" element={<History />} />
         <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/video-analysis" element={<VideoAnalysis />} />
         <Route path="/project/:projectId/outline" element={<OutlineEditor />} />
         <Route path="/project/:projectId/detail" element={<DetailEditor />} />
         <Route path="/project/:projectId/preview" element={<SlidePreview />} />

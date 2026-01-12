@@ -829,3 +829,25 @@ export const resetSettings = async (): Promise<ApiResponse<Settings>> => {
   const response = await apiClient.post<ApiResponse<Settings>>('/api/settings/reset');
   return response.data;
 };
+
+// ===== 视频分析 =====
+
+/**
+ * 分析视频内容
+ */
+export const analyzeVideo = async (
+  file: File,
+  prompt?: string
+): Promise<ApiResponse<{ analysis: string; file_id: string; status: string }>> => {
+  const formData = new FormData();
+  formData.append('file', file);
+  if (prompt) {
+    formData.append('prompt', prompt);
+  }
+
+  const response = await apiClient.post<ApiResponse<{ analysis: string; file_id: string; status: string }>>(
+    '/api/video-analysis',
+    formData
+  );
+  return response.data;
+};

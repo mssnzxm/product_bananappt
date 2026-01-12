@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, FileText, FileEdit, ImagePlus, Paperclip, Palette, Lightbulb, Search, Settings, Clock } from 'lucide-react';
+import { Sparkles, FileText, FileEdit, ImagePlus, Paperclip, Palette, Lightbulb, Search, Settings, Clock, Film } from 'lucide-react';
 import { Button, Textarea, Card, useToast, MaterialGeneratorModal, ReferenceFileList, ReferenceFileSelector, FilePreviewModal, ImagePreviewList, Loading } from '@/components/shared';
 import { TemplateSelector, getTemplateFile } from '@/components/shared/TemplateSelector';
-import { listUserTemplates, type UserTemplate, uploadReferenceFile, type ReferenceFile, associateFileToProject, triggerFileParse, uploadMaterial, associateMaterialsToProject } from '@/api/endpoints';
+import { listUserTemplates, type UserTemplate, uploadReferenceFile, type ReferenceFile, associateFileToProject, triggerFileParse, uploadMaterial, associateMaterialsToProject, analyzeVideo } from '@/api/endpoints';
 import { useProjectStore } from '@/store/useProjectStore';
 import { PRESET_STYLES } from '@/config/presetStyles';
 import * as api from '@/api/endpoints';
@@ -11,7 +11,7 @@ import { normalizeProject } from '@/utils';
 import { getProjectTitle, formatDate } from '@/utils/projectUtils';
 import type { Project } from '@/types';
 
-type CreationType = 'idea' | 'outline' | 'description';
+type CreationType = 'idea' | 'outline' | 'description' | 'video';
 
 export const Home: React.FC = () => {
   const navigate = useNavigate();
@@ -33,9 +33,13 @@ export const Home: React.FC = () => {
   const [useTemplateStyle, setUseTemplateStyle] = useState(false);
   const [templateStyle, setTemplateStyle] = useState('');
   const [hoveredPresetId, setHoveredPresetId] = useState<string | null>(null);
+  const [selectedVideo, setSelectedVideo] = useState<File | null>(null);
+  const [videoAnalysis, setVideoAnalysis] = useState<string | null>(null);
+  const [isAnalyzingVideo, setIsAnalyzingVideo] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const templateFileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
   
   // 历史项目相关状态
   const [recentProjects, setRecentProjects] = useState<Project[]>([]);
@@ -354,6 +358,77 @@ export const Home: React.FC = () => {
     e.target.value = '';
   };
 
+  // 视频选择变化
+  const handleVideoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // 检查文件类型
+    if (!file.type.startsWith('video/')) {
+      show({ message: '请选择视频文件', type: 'error' });
+      return;
+    }
+
+    // 检查文件大小（200MB 限制）
+    const maxSize = 200 * 1024 * 1024; // 200MB
+    if (file.size > maxSize) {
+      show({ 
+        message: `文件过大：${(file.size / 1024 / 1024).toFixed(1)}MB，最大支持 200MB`, 
+        type: 'error' 
+      });
+      return;
+    }
+
+    setSelectedVideo(file);
+    setVideoAnalysis(null);
+
+    // 清空 input，允许重复选择同一文件
+    e.target.value = '';
+  };
+
+  // 视频上传和分析
+  const handleVideoUpload = async () => {
+    if (!selectedVideo) {
+      show({ message: '请先选择视频文件', type: 'error' });
+      return;
+    }
+
+    setIsAnalyzingVideo(true);
+    try {
+      show({ message: '正在分析视频...', type: 'info' });
+      
+      // 调用视频分析 API
+      const response = await analyzeVideo(selectedVideo, '请详细分析这个视频的内容，提取关键信息和结构');
+      
+      if (response?.data?.analysis) {
+        setVideoAnalysis(response.data.analysis);
+        // 将分析结果填充到内容框中，以便用户可以基于此生成 PPT
+        setContent(response.data.analysis);
+        show({ message: '视频分析完成', type: 'success' });
+      } else {
+        show({ message: '视频分析失败', type: 'error' });
+      }
+    } catch (error: any) {
+      console.error('视频分析失败:', error);
+      show({ 
+        message: `视频分析失败: ${error?.response?.data?.error?.message || error.message || '未知错误'}`, 
+        type: 'error' 
+      });
+    } finally {
+      setIsAnalyzingVideo(false);
+    }
+  };
+
+  // 移除已选择的视频
+  const handleRemoveVideo = () => {
+    setSelectedVideo(null);
+    setVideoAnalysis(null);
+    // 如果当前是视频标签页，清空内容
+    if (activeTab === 'video') {
+      setContent('');
+    }
+  };
+
   const tabConfig = {
     idea: {
       icon: <Sparkles size={20} />,
@@ -372,6 +447,11 @@ export const Home: React.FC = () => {
       label: '从描述生成',
       placeholder: '粘贴你的完整页面描述...\n\n例如：\n第 1 页\n标题：人工智能的诞生\n内容：1950 年，图灵提出"图灵测试"...\n\n第 2 页\n标题：AI 的发展历程\n内容：1950年代：符号主义...\n...',
       description: '已有完整描述？AI 将自动解析出大纲并切分为每页描述，直接生成图片',
+    },
+    video: {
+      icon: <Film size={20} />,
+      label: '从视频生成',
+      description: '上传视频，AI 将分析视频内容并生成对应的 PPT',
     },
   };
 
@@ -459,7 +539,9 @@ export const Home: React.FC = () => {
       // 传递风格描述（只要有内容就传递，不管开关状态）
       const styleDesc = templateStyle.trim() ? templateStyle.trim() : undefined;
       
-      await initializeProject(activeTab, content, templateFile || undefined, styleDesc);
+      // 对于视频类型，将其视为description类型处理，因为我们已经将分析结果填充到了content中
+      const projectType = activeTab === 'video' ? 'description' : activeTab;
+      await initializeProject(projectType, content, templateFile || undefined, styleDesc);
       
       // 根据类型跳转到不同页面
       const projectId = localStorage.getItem('currentProjectId');
@@ -650,28 +732,94 @@ export const Home: React.FC = () => {
             </p>
           </div>
 
-          {/* 输入区 - 带按钮 */}
+          {/* 输入区 - 根据标签页类型显示不同内容 */}
           <div className="relative mb-2 group">
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-banana-400 to-orange-400 rounded-lg opacity-0 group-hover:opacity-20 blur transition-opacity duration-300"></div>
-            <Textarea
-              ref={textareaRef}
-              placeholder={tabConfig[activeTab].placeholder}
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              onPaste={handlePaste}
-              rows={activeTab === 'idea' ? 4 : 8}
-              className="relative pr-20 md:pr-28 pb-12 md:pb-14 text-sm md:text-base border-2 border-gray-200 focus:border-banana-400 transition-colors duration-200" // 为右下角按钮留空间
-            />
+            {activeTab === 'video' ? (
+              // 视频标签页 - 视频上传区域
+              <div className="relative">
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-banana-400 to-orange-400 rounded-lg opacity-0 group-hover:opacity-20 blur transition-opacity duration-300"></div>
+                <div className="relative p-8 border-2 border-dashed border-gray-300 rounded-lg hover:border-banana-400 transition-colors duration-200 bg-white/50">
+                  {selectedVideo ? (
+                    <div className="text-center">
+                      <Film size={48} className="mx-auto text-banana-500 mb-3" />
+                      <p className="text-sm font-medium text-gray-700 mb-1">{selectedVideo.name}</p>
+                      <p className="text-xs text-gray-500 mb-3">
+                        {Math.round(selectedVideo.size / 1024 / 1024)} MB
+                      </p>
+                      <div className="flex justify-center gap-2">
+                        <Button
+                          size="sm"
+                          onClick={handleRemoveVideo}
+                          variant="secondary"
+                          className="text-xs"
+                        >
+                          更换视频
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={handleVideoUpload}
+                          loading={isAnalyzingVideo}
+                          className="text-xs"
+                        >
+                          {isAnalyzingVideo ? '分析中...' : '开始分析'}
+                        </Button>
+                      </div>
+                      
+                      {/* 视频分析结果预览 */}
+                      {videoAnalysis && (
+                        <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                          <p className="text-xs font-medium text-gray-700 mb-2">视频分析结果：</p>
+                          <div className="text-xs text-gray-600 line-clamp-4 max-h-32 overflow-y-auto pr-2">
+                            {videoAnalysis}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-center">
+                      <Film size={64} className="mx-auto text-gray-400 mb-3" />
+                      <p className="text-sm text-gray-600 mb-4">
+                        点击或拖拽视频文件到此处上传
+                      </p>
+                      <Button
+                        size="sm"
+                        onClick={() => videoInputRef.current?.click()}
+                        className="text-xs"
+                      >
+                        选择视频文件
+                      </Button>
+                      <p className="text-xs text-gray-500 mt-2">
+                        支持 MP4、WebM 等格式，最大 200MB
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              // 其他标签页 - 文本输入区
+              <div>
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-banana-400 to-orange-400 rounded-lg opacity-0 group-hover:opacity-20 blur transition-opacity duration-300"></div>
+                <Textarea
+                  ref={textareaRef}
+                  placeholder={tabConfig[activeTab].placeholder}
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  onPaste={handlePaste}
+                  rows={activeTab === 'idea' ? 4 : 8}
+                  className="relative pr-20 md:pr-28 pb-12 md:pb-14 text-sm md:text-base border-2 border-gray-200 focus:border-banana-400 transition-colors duration-200" // 为右下角按钮留空间
+                />
 
-            {/* 左下角：上传文件按钮（回形针图标） */}
-            <button
-              type="button"
-              onClick={handlePaperclipClick}
-              className="absolute left-2 md:left-3 bottom-2 md:bottom-3 z-10 p-1.5 md:p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors active:scale-95 touch-manipulation"
-              title="选择参考文件"
-            >
-              <Paperclip size={18} className="md:w-5 md:h-5" />
-            </button>
+                {/* 左下角：上传文件按钮（回形针图标） */}
+                <button
+                  type="button"
+                  onClick={handlePaperclipClick}
+                  className="absolute left-2 md:left-3 bottom-2 md:bottom-3 z-10 p-1.5 md:p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors active:scale-95 touch-manipulation"
+                  title="选择参考文件"
+                >
+                  <Paperclip size={18} className="md:w-5 md:h-5" />
+                </button>
+              </div>
+            )}
 
             {/* 右下角：开始生成按钮 */}
             <div className="absolute right-2 md:right-3 bottom-2 md:bottom-3 z-10">
@@ -680,7 +828,8 @@ export const Home: React.FC = () => {
                 onClick={handleSubmit}
                 loading={isGlobalLoading}
                 disabled={
-                  !content.trim() || 
+                  (activeTab !== 'video' && !content.trim()) || 
+                  (activeTab === 'video' && !content.trim()) ||
                   referenceFiles.some(f => f.parse_status === 'pending' || f.parse_status === 'parsing')
                 }
                 className="shadow-sm text-xs md:text-sm px-3 md:px-4"
@@ -701,22 +850,36 @@ export const Home: React.FC = () => {
             onChange={handleFileSelect}
             className="hidden"
           />
-
-          {/* 图片预览列表 */}
-          <ImagePreviewList
-            content={content}
-            onRemoveImage={handleRemoveImage}
-            className="mb-4"
+          
+          {/* 隐藏的视频输入 */}
+          <input
+            ref={videoInputRef}
+            type="file"
+            accept="video/*"
+            onChange={handleVideoSelect}
+            className="hidden"
           />
 
-          <ReferenceFileList
-            files={referenceFiles}
-            onFileClick={setPreviewFileId}
-            onFileDelete={handleFileRemove}
-            onFileStatusChange={handleFileStatusChange}
-            deleteMode="remove"
-            className="mb-4"
-          />
+          {/* 根据标签页类型显示图片预览列表和参考文件列表 */}
+          {activeTab !== 'video' && (
+            <>
+              {/* 图片预览列表 */}
+              <ImagePreviewList
+                content={content}
+                onRemoveImage={handleRemoveImage}
+                className="mb-4"
+              />
+
+              <ReferenceFileList
+                files={referenceFiles}
+                onFileClick={setPreviewFileId}
+                onFileDelete={handleFileRemove}
+                onFileStatusChange={handleFileStatusChange}
+                deleteMode="remove"
+                className="mb-4"
+              />
+            </>
+          )}
 
           {/* 模板选择 */}
           <div className="mb-6 md:mb-8 pt-4 border-t border-gray-100">
